@@ -1,0 +1,78 @@
+int enginepin=D1;
+int yellowled=D2;
+int blueled=D3;
+int redled=D4;
+int greenled=D6;
+int motorstatus=0;
+int nowater=0;
+int errstatus=0;
+
+void setup() {
+pinMode(enginepin,OUTPUT);
+pinMode(yellowled,OUTPUT);
+pinMode(blueled,OUTPUT);
+pinMode(redled,OUTPUT);
+pinMode(greenled,OUTPUT);
+digitalWrite(enginepin,LOW);
+digitalWrite(yellowled,LOW);
+digitalWrite(blueled,LOW);
+digitalWrite(redled,LOW);
+digitalWrite(greenled,LOW);
+Particle.subscribe("WATERSENSOR",waterpin,"4b0028000c51353432383931");
+Particle.subscribe("MOTORSENSOR",motorpin,"4b0028000c51353432383931");
+}
+void waterpin(String event, String data)
+{
+      if (data=="1"){
+          digitalWrite(enginepin,LOW);
+          digitalWrite(blueled,LOW);
+          digitalWrite(yellowled,LOW);
+          motorstatus=0;
+
+      }
+      else if (data=="0" && errstatus==0){
+         digitalWrite(enginepin,HIGH);
+         digitalWrite(blueled,HIGH);
+         motorstatus=1;
+      }
+      if (data=="0"){
+        digitalWrite(yellowled,HIGH);
+  
+      }
+}
+      
+void motorpin(String event2, String data2)
+{
+      if (data2=="0" && motorstatus==1){
+          nowater=nowater+1;
+          delay(1000);
+      }
+      else if (data2=="1"){
+          digitalWrite(redled,LOW);
+          nowater=0;
+          errstatus=0;
+      }
+      if (nowater>=30){
+          digitalWrite(redled,HIGH);
+        digitalWrite(enginepin,LOW);
+          digitalWrite(blueled,LOW);
+          errstatus=errstatus+1;
+          delay(1000);
+      }
+      if (errstatus>=600){
+          errstatus=0;
+          nowater=0;
+         digitalWrite(redled,LOW);
+
+      }
+}
+      
+void loop() {
+if (Particle.connected()){
+    digitalWrite(greenled,HIGH);
+}
+else {digitalWrite(greenled,LOW);
+     delay(500);
+     digitalWrite(greenled,HIGH);
+}
+}
